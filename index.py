@@ -43,7 +43,7 @@ def on_message(ws_app, message):
         chat_id = msg["id"]
 
         print(" - " + chat_text)
-        if len(chat_text > 30):
+        if len(chat_text) > 30:
             if perspective_ban(chat_text):
                 if delete_message(chat_id, chat_text):
                     print("Deleted message: " + chat_text)
