@@ -20,7 +20,7 @@ chat_name = {"displayName": "Vigilante"}
 chat_response = requests.post(owncast_url + "/api/chat/register", json=chat_name)
 chat_user = chat_response.json()
 chat_token = chat_user["accessToken"]
-print("access token acquired")
+print("access token acquired, async version")
 
 
 def delete_message(id, text):
