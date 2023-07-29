@@ -2,6 +2,8 @@ import websocket
 import requests
 import json
 import keys
+from concurrent.futures import ProcessPoolExecutor
+
 from perspective import perspective_ban
 
 openai_token = keys.OPENAI_TOKEN
@@ -11,6 +13,8 @@ owncast_url = keys.OWNCAST_URL
 websocket_url = keys.OWNCAST_WEBSOCKET
 
 log = open("deleted.txt", "a")
+
+words = ['nigger', 'faggot', 'fag', 'http', 'cum']
 
 chat_name = {"displayName": "Vigilante"}
 chat_response = requests.post(owncast_url + "/api/chat/register", json=chat_name)
@@ -28,27 +32,42 @@ def delete_message(id, text):
     )
     if delete_response.json()["success"] == True:
         log.write("\n" + text)
+        removed += 1
         return True
     else:
         return False
+    
 
-
-removed = 0
-
-
-def on_message(ws_app, message):
+# main moderation logic
+# makes calls to delete_message and perspective.py
+async def automod(message):
     msg = json.loads(message)
+    
     if msg["type"] == "CHAT":
         chat_text = msg["body"]
         chat_id = msg["id"]
+        name = msg["user"]["displayName"]
+        lower_chat = chat_text.lower()
+        print(name + ": " + chat_text)
 
-        print(" - " + chat_text)
-        if len(chat_text) > 30:
+        if len(chat_text) > 100:
             if perspective_ban(chat_text):
-                if delete_message(chat_id, chat_text):
-                    print("Deleted message: " + chat_text)
-                    removed += 1
-    print("TOTAL REMOVED: " + removed)
+                delete_message(chat_id, chat_text)
+
+        for word in words:
+            if word in chat_text:
+                delete_message(chat_id, chat_text)
+
+        if "卐" in name:
+            delete_message(chat_id, chat_text)
+
+removed = 0
+
+# websocket app on_message function
+def on_message(ws_app, message):
+    with ProcessPoolExecutor as exe:
+        exe.submit(automod(message))
+   
 
 
 ws_URL = websocket_url + chat_token
