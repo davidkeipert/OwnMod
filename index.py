@@ -1,3 +1,5 @@
+from sys import exit
+from signal import signal, SIGINT
 import websocket
 import requests
 import json
@@ -15,7 +17,7 @@ websocket_url = keys.OWNCAST_WEBSOCKET
 
 log = open("deleted.txt", "a")
 
-words = ['nigger', 'faggot', 'fag', 'http', 'cum', '123test', 'kaylor']
+words = ['nigger', 'faggot', 'fag', 'http', 'cum', '123test', 'kaylor', 'twitch', 'milker']
 banned_names = ["卐", "ᛋ", "nigg", "í", 'é', "gas", "jew", "test", "ttt"]
 
 chat_name = {"displayName": "Vigilante"}
@@ -62,6 +64,8 @@ async def automod(message):
             else:
                 print("_________BAN FAILED")
                 print(banned.json())
+        else:
+            print("________" + name + " checked and not illegal")
 
     
     if msg["type"] == "CHAT":
@@ -90,8 +94,17 @@ removed = 0
 def on_message(ws_app, message):
     asyncio.run(automod(message))
    
-
+def exit_handler(signal_received, frame):
+    print("Shutting down...")
+    ws_app.close()
+    exit(0) 
 
 ws_URL = websocket_url + chat_token
 ws_app = websocket.WebSocketApp(ws_URL, on_message=on_message)
-ws_app.run_forever()
+
+
+if __name__ == '__main__':
+    signal(SIGINT, exit_handler)
+
+    print('___hello there!')
+    ws_app.run_forever()
